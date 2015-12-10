@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Licensed to the Apache Software Foundation (ASF) under one or more contributor 
+	license agreements. See the NOTICE file distributed with this work for additional 
+	information regarding copyright ownership. The ASF licenses this file to 
+	You under the Apache License, Version 2.0 (the "License"); you may not use 
+	this file except in compliance with the License. You may obtain a copy of 
+	the License at http://www.apache.org/licenses/LICENSE-2.0 Unless required 
+	by applicable law or agreed to in writing, software distributed under the 
+	License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS 
+	OF ANY KIND, either express or implied. See the License for the specific 
+	language governing permissions and limitations under the License. -->
+
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:cxf="http://camel.apache.org/schema/cxf"
+	xmlns:jaxrs="http://cxf.apache.org/jaxrs"
+	xsi:schemaLocation="
+         http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+          http://camel.apache.org/schema/cxf http://camel.apache.org/schema/cxf/camel-cxf.xsd
+       http://cxf.apache.org/jaxrs http://cxf.apache.org/schemas/jaxrs.xsd
+         http://camel.apache.org/schema/spring http://camel.apache.org/schema/spring/camel-spring.xsd">
+
+	<!-- Twitter account @rh_channel created for testing purpose, password jboss!123 -->
+	<bean id="twitter" class="org.apache.camel.component.twitter.TwitterComponent">
+		<property name="accessToken"
+			value="4071822013-2ODviXrX6iRqLngGt1nFWSkiTbISzkFM7bPUv5g" />
+		<property name="accessTokenSecret"
+			value="DI3oLHpxoQFy6F6CayxXHtboBL4Lq7atjDJWcQwEAmBXD" />
+		<property name="consumerKey" value="bUMJ16LHlKqzMV0wh9pCRgFN7" />
+		<property name="consumerSecret"
+			value="KquZU58XmYlub0nFgNITg6PlfSIox1gMZLwQA6gkrbBRaYh7sX" />
+	</bean>
+	<bean id="activemq" class="org.apache.activemq.camel.component.ActiveMQComponent">
+		<property name="brokerURL" value="tcp://localhost:61616" />
+		<property name="password" value="admin" />
+		<property name="userName" value="admin" />
+		
+	</bean>
+
+	<cxf:rsClient id="rsClient"
+		address="http://localhost:8080/business-central/rest/repositories"
+		serviceClass="com.redhat.channels.endpoint.MetaDataEnricher" username="admin"
+		password="jboss123!" loggingFeatureEnabled="true">
+		<cxf:providers>
+			<bean class="org.apache.cxf.jaxrs.provider.JAXBElementProvider" />
+		</cxf:providers>
+		<cxf:headers>
+			<cxf:entry key="Charset" value="UTF-8" />
+		</cxf:headers>
+	</cxf:rsClient>
+	<!-- <route id="consume-twitter-data"> <from uri="twitter://timeline/home?type=polling&amp;delay=500"/> 
+		<log message="Receivng data ${body}"/> </route> -->
+
+
+
+	<camelContext id="camel" xmlns="http://camel.apache.org/schema/spring">
+		<endpoint
+			uri="dozer:meta_data_entity_transformation?sourceModel=com.redhat.channels.model.twitter.BatchTwitterRecord&amp;targetModel=com.redhat.channels.model.DataEntity&amp;mappingFile=metadata_data_entity_transformation.xml"
+			id="meta_data_entity_transformation" />
+		<dataFormats>
+			<bindy type="Csv"
+				classType="com.redhat.channels.model.twitter.BatchTwitterRecord" id="bindyDataformat" />
+		</dataFormats>
+		<route id="consume-batch-file-data">
+			<from
+				uri="file:///Users/mfentane/dataTest?moveFailed=./error/${file:name.noext}-${date:now:yyyyMMddHHmmssSSS}.${file:name.ext}" />
+			<split>
+				<tokenize token="\n"></tokenize>
+				<unmarshal ref="bindyDataformat" />
+				<to uri="direct:dataNormalization" />
+				<to uri="activemq:topic:jdgFeed" />
+			</split>
+		</route>
+		<route id="meta-data-enrichment">
+			<from uri="direct:addMetaData" />
+			<log message="Processing data entry ${body}" />
+   			<log message="After processing data entry ${body}" />
+
+		</route>
+		<route id="data-normalization">
+			<from uri="direct:dataNormalization" />
+			<to ref="meta_data_entity_transformation" />
+			<log message="Processing data entry for normalization ${body}" />
+		</route>
+	</camelContext>
+
+</beans>

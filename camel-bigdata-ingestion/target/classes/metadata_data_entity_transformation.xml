@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<mappings xmlns="http://dozer.sourceforge.net" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://dozer.sourceforge.net http://dozer.sourceforge.net/schema/beanmapping.xsd">
+    <configuration>
+        <wildcard>false</wildcard>
+    </configuration>
+    <mapping>
+        <class-a>com.redhat.channels.model.twitter.BatchTwitterRecord</class-a>
+        <class-b>com.redhat.channels.model.DataEntity</class-b>
+        <field>
+            <a>id</a>
+            <b>id</b>
+        </field>
+        <field>
+            <a>country</a>
+            <b>country</b>
+        </field>
+        <field>
+            <a>date</a>
+            <b>context.date</b>
+        </field>
+        <field>
+            <a>sentiment</a>
+            <b>sentiment</b>
+        </field>
+        <field>
+            <a>content</a>
+            <b>content</b>
+        </field>
+        <field>
+            <a>id</a>
+            <b>context.GUID</b>
+        </field>
+    </mapping>
+    <mapping>
+        <class-a>org.apache.camel.component.dozer.VariableMapper</class-a>
+        <class-b>com.redhat.channels.model.DataEntity</class-b>
+    </mapping>
+</mappings>
