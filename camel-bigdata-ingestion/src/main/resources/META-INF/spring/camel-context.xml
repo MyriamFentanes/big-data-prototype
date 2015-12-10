@@ -30,7 +30,7 @@
 			value="KquZU58XmYlub0nFgNITg6PlfSIox1gMZLwQA6gkrbBRaYh7sX" />
 	</bean>
 	<bean id="activemq" class="org.apache.activemq.camel.component.ActiveMQComponent">
-		<property name="brokerURL" value="tcp://localhost:61616" />
+		<property name="brokerURL" value="tcp://1rhel67svmdesktopj-bigelephantinthero-hc7niqto.srv.ravcloud.com:61616" />
 		<property name="password" value="admin" />
 		<property name="userName" value="admin" />
 		
